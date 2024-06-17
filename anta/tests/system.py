@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, ClassVar
 
-from anta.custom_types import PositiveInteger
+from anta.custom_types import Percent, PositiveInteger
 from anta.models import AntaCommand, AntaTest
 
 if TYPE_CHECKING:
@@ -187,6 +187,7 @@ class VerifyCPUUtilization(AntaTest):
     ```yaml
     anta.tests.system:
       - VerifyCPUUtilization:
+          threshold: 75.0
     ```
     """
 
@@ -195,12 +196,18 @@ class VerifyCPUUtilization(AntaTest):
     categories: ClassVar[list[str]] = ["system"]
     commands: ClassVar[list[AntaCommand | AntaTemplate]] = [AntaCommand(command="show processes top once", revision=1)]
 
+    class Input(AntaTest.Input):
+        """Input model for the VerifyCPUUtilization test."""
+
+        threshold: Percent = 75.0
+        """CPU utilization threshold above which the test will fail. Defaults to 75%."""
+
     @AntaTest.anta_test
     def test(self) -> None:
         """Main test function for VerifyCPUUtilization."""
         command_output = self.instance_commands[0].json_output
         command_output_data = command_output["cpuInfo"]["%Cpu(s)"]["idle"]
-        if command_output_data > CPU_IDLE_THRESHOLD:
+        if command_output_data > (100 - self.inputs.threshold):
             self.result.is_success()
         else:
             self.result.is_failure(f"Device has reported a high CPU utilization: {100 - command_output_data}%")
@@ -219,6 +226,7 @@ class VerifyMemoryUtilization(AntaTest):
     ```yaml
     anta.tests.system:
       - VerifyMemoryUtilization:
+          threshold: 75.0
     ```
     """
 
@@ -227,12 +235,18 @@ class VerifyMemoryUtilization(AntaTest):
     categories: ClassVar[list[str]] = ["system"]
     commands: ClassVar[list[AntaCommand | AntaTemplate]] = [AntaCommand(command="show version", revision=1)]
 
+    class Input(AntaTest.Input):
+        """Input model for the VerifyMemoryUtilization test."""
+
+        threshold: Percent = 25.0
+        """Memory utilization threshold above which the test will fail. Defaults to 75%."""
+
     @AntaTest.anta_test
     def test(self) -> None:
         """Main test function for VerifyMemoryUtilization."""
         command_output = self.instance_commands[0].json_output
         memory_usage = command_output["memFree"] / command_output["memTotal"]
-        if memory_usage > MEMORY_THRESHOLD:
+        if memory_usage > (1 - (self.inputs.threshold / 100)):
             self.result.is_success()
         else:
             self.result.is_failure(f"Device has reported a high memory usage: {(1 - memory_usage)*100:.2f}%")

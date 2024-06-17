@@ -168,7 +168,7 @@ EntityManager::doBackoff waiting for remote sysdb version ...................ok
                 },
             },
         ],
-        "inputs": None,
+        "inputs": {"threshold": 75.0},
         "expected": {"result": "success"},
     },
     {
@@ -195,7 +195,7 @@ EntityManager::doBackoff waiting for remote sysdb version ...................ok
                 },
             },
         ],
-        "inputs": None,
+        "inputs": {"threshold": 75.0},
         "expected": {"result": "failure", "messages": ["Device has reported a high CPU utilization: 75.2%"]},
     },
     {
@@ -211,7 +211,7 @@ EntityManager::doBackoff waiting for remote sysdb version ...................ok
                 "version": "4.27.3F",
             },
         ],
-        "inputs": None,
+        "inputs": {"threshold": 75.0},
         "expected": {"result": "success"},
     },
     {
@@ -227,7 +227,7 @@ EntityManager::doBackoff waiting for remote sysdb version ...................ok
                 "version": "4.27.3F",
             },
         ],
-        "inputs": None,
+        "inputs": {"threshold": 75.0},
         "expected": {"result": "failure", "messages": ["Device has reported a high memory usage: 95.56%"]},
     },
     {

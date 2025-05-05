@@ -14,6 +14,73 @@ if TYPE_CHECKING:
     from anta.models import AntaTemplate
 
 
+class VerifyFieldNotice99Resolution(AntaTest):
+    """Verifies if the device is using an Aboot version that fixes the bug discussed in the Field Notice 99.
+
+    Aboot manages system settings prior to EOS initialization.
+
+    Reference: https://www.arista.com/en/support/advisories-notices/field-notice/21317-field-notice-0099
+
+    Expected Results
+    ----------------
+    * Success: The test will pass if the device is using an Aboot version that fixes the bug discussed in the Field Notice 44.
+    * Failure: The test will fail if the device is not using an Aboot version that fixes the bug discussed in the Field Notice 44.
+
+    Examples
+    --------
+    ```yaml
+    anta.tests.field_notices:
+      - VerifyFieldNotice44Resolution:
+    ```
+    """
+
+    description = "Verifies that the device is using the correct Aboot version per FN0099."
+    categories: ClassVar[list[str]] = ["field notices"]
+    commands: ClassVar[list[AntaCommand | AntaTemplate]] = [AntaCommand(command="show boot", revision=1), AntaCommand(command="show platform bios", revision=1)]
+
+    @skip_on_platforms(["cEOSLab", "vEOS-lab", "cEOSCloudLab", "vEOS"])
+    @AntaTest.anta_test
+    def test(self) -> None:
+        """Main test function for VerifyFieldNotice44Resolution."""
+
+        boot_output = self.instance_commands[0].json_output
+        platform_output = self.instance_commands[1].json_output
+
+        affected_aboot_versions = [
+            "6.1.11-18938843",
+            "6.2.0-24152155",
+            "6.2.0-24152155",
+            "7.1.4-14169220",
+            "7.1.5-20123938",
+            "7.1.6-22971530",
+            "9.0.1-11845100",
+            "9.0.2-12970762",
+            "9.0.3-14223577",
+            "9.0.4-16346895",
+            "10.0.1-22594906",
+            "10.0.1-22771386",
+        ]
+
+        sb_supported = boot_output["securebootSupported"]
+        sb_enabled = boot_output["securebootEnabled"]
+        spi_protected = boot_output["spiFlashWriteProtected"]
+        aboot_version = f"{platform_output["runningVersion"]["version"]}-{platform_output["runningVersion"]["changeNumber"]}"
+
+        if not sb_supported:
+            self.result.is_skipped("Device is not impacted by FN0099, secure boot not supported")
+        
+        elif not sb_enabled:
+            self.result.is_success("Device is not impacted by FN0099, secure boot not enabled")
+     
+        elif sb_supported and sb_enabled:
+            if aboot_version in affected_aboot_versions:
+                self.result.is_failure(f"Device is running secure boot on an affected version of Aboot: {aboot_version}\n")
+
+                if spi_protected:
+                    self.result.is_failure(f"Device is running secure boot with SPI flash write protection enabled, see FN0099 for more details")
+                
+                self.result.is_failure(f"Device is running incorrect version of aboot {aboot_version}")
+
 class VerifyFieldNotice44Resolution(AntaTest):
     """Verifies if the device is using an Aboot version that fixes the bug discussed in the Field Notice 44.
 
